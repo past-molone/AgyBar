@@ -1,0 +1,7 @@
+{
+  "name": "agybar",
+  "version": "1.0.0",
+  "description": "Universal real-time progress bar & planning tracker for AI CLIs",
+  "author": "AgyBar Team",
+  "hooks": "hooks.json"
+}

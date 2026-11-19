@@ -24,22 +24,10 @@ def main() -> None:
     event_name = payload.get("hookEventName", "")
     conv_id = payload.get("conversationId", "default-session")
     transcript_path = payload.get("transcriptPath")
-
-    # Fallback event detection if hookEventName is omitted
-    if not event_name:
-        if "terminationReason" in payload:
-            event_name = "Stop"
-        elif "toolCall" in payload and "error" in payload:
-            event_name = "PostToolUse"
-        elif "toolCall" in payload:
-            event_name = "PreToolUse"
-        elif "invocationNum" in payload:
-            event_name = "PreInvocation"
-        else:
-            event_name = "SessionStart"
+    workspace_path = payload.get("cwd") or (payload.get("workspacePaths", [None])[0] if payload.get("workspacePaths") else None)
 
     # Initialize state and renderer
-    state = SessionState(conv_id)
+    state = SessionState(conv_id, workspace_path=workspace_path)
     renderer = ProgressBarRenderer()
 
     # Attempt to sync plan and current progress from transcript

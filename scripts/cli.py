@@ -128,38 +128,47 @@ def cmd_demo(args: argparse.Namespace) -> None:
 
 
 def cmd_install(args: argparse.Namespace) -> None:
+    targets = []
+    target_cli = getattr(args, "cli", "all")
+
     if args.global_install:
-        target_dir = Path.home() / ".gemini" / "config" / "plugins" / "agybar"
-        target_type = "Global (~/.gemini/config/plugins/agybar/)"
+        if target_cli in ("all", "agy"):
+            targets.append(("Antigravity", Path.home() / ".gemini" / "config" / "plugins" / "agybar"))
+        if target_cli in ("all", "claude"):
+            targets.append(("Claude Code", Path.home() / ".claude" / "plugins" / "agybar"))
+        if target_cli in ("all", "gemini"):
+            targets.append(("Gemini CLI", Path.home() / ".gemini" / "extensions" / "agybar"))
     else:
         project_root = Path(args.project).resolve() if args.project else Path.cwd()
-        target_dir = project_root / ".agents" / "plugins" / "agybar"
-        target_type = f"Project-local ({target_dir})"
+        if target_cli in ("all", "agy"):
+            targets.append(("Antigravity", project_root / ".agents" / "plugins" / "agybar"))
+        if target_cli in ("all", "claude"):
+            targets.append(("Claude Code", project_root / ".claude-plugins" / "agybar"))
+        if target_cli in ("all", "gemini"):
+            targets.append(("Gemini CLI", project_root / ".gemini" / "extensions" / "agybar"))
 
-    print(f"{CYAN}Installing AgyBar to:{RESET} {target_type}")
+    items_to_copy = ["plugin.json", "hooks.json", "gemini-extension.json", "rules", "scripts"]
 
-    target_dir.mkdir(parents=True, exist_ok=True)
+    for name, target_dir in targets:
+        print(f"{CYAN}Installing AgyBar for {name}:{RESET} {target_dir}")
+        target_dir.mkdir(parents=True, exist_ok=True)
+        for item in items_to_copy:
+            src = ROOT_DIR / item
+            dst = target_dir / item
+            if not src.exists():
+                continue
+            if src.is_dir():
+                if dst.exists():
+                    shutil.rmtree(dst)
+                shutil.copytree(src, dst)
+            else:
+                shutil.copy2(src, dst)
 
-    # Files to copy
-    items_to_copy = ["plugin.json", "hooks.json", "rules", "scripts"]
-    for item in items_to_copy:
-        src = ROOT_DIR / item
-        dst = target_dir / item
-        if not src.exists():
-            continue
-        if src.is_dir():
-            if dst.exists():
-                shutil.rmtree(dst)
-            shutil.copytree(src, dst)
-        else:
-            shutil.copy2(src, dst)
+        for py_file in (target_dir / "scripts").glob("*.py"):
+            py_file.chmod(0o755)
+        print(f"{GREEN}✔ Successfully installed for {name}!{RESET}")
 
-    # Ensure executable permissions on target scripts
-    for py_file in (target_dir / "scripts").glob("*.py"):
-        py_file.chmod(0o755)
-
-    print(f"{GREEN}✔ Successfully installed AgyBar to:{RESET} {target_dir}")
-    print(f"{DIM}Antigravity will automatically load AgyBar for sessions in scope.{RESET}\n")
+    print(f"\n{DIM}AI agents will automatically load AgyBar for sessions in scope.{RESET}\n")
 
 
 def cmd_uninstall(args: argparse.Namespace) -> None:
@@ -196,11 +205,13 @@ def main() -> None:
     p_install = subparsers.add_parser("install", help="Install AgyBar plugin")
     p_install.add_argument("--global", dest="global_install", action="store_true", help="Install globally")
     p_install.add_argument("--project", "-p", help="Target project root directory")
+    p_install.add_argument("--cli", "-c", choices=["all", "agy", "claude", "gemini"], default="all", help="Target AI CLI")
 
     # uninstall
     p_uninstall = subparsers.add_parser("uninstall", help="Uninstall AgyBar plugin")
     p_uninstall.add_argument("--global", dest="global_install", action="store_true", help="Uninstall globally")
     p_uninstall.add_argument("--project", "-p", help="Target project root directory")
+    p_uninstall.add_argument("--cli", "-c", choices=["all", "agy", "claude", "gemini"], default="all", help="Target AI CLI")
 
     args = parser.parse_args()
 

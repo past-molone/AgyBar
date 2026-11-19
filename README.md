@@ -1,44 +1,91 @@
 # ⚡ AgyBar
 
-> **Real-Time Progress Bar & Planning Tracker for Gemini Antigravity (`agy`)**
+> **Universal Real-Time Progress Bar & Plan Tracker for AI CLIs**  
+> *Supports Gemini Antigravity (`agy`), Claude Code, Gemini CLI, and generic AI agents.*
 
 ```text
 ⚡ AgyBar [████████████░░░░░░░░]  60% (3/5) • Running unit test suite [00:14]
 ```
 
-AgyBar brings real-time visual progress tracking to Google DeepMind's **Gemini Antigravity** agent instances. By combining a lightweight **Planning Protocol** with Antigravity's **Lifecycle Hooks**, AgyBar prompts the agent to establish a step count upfront, then monitors each tool operation to display live terminal telemetry.
+**AgyBar** brings real-time visual progress tracking and live terminal telemetry to agentic AI CLIs. 
+
+Most importantly, **AgyBar does not force the AI to recreate a plan if an existing plan already exists**. If your agent or project is already using a planning skill (such as `/plan`, an active `TODO.md`, or markdown checklists `- [ ]` / `- [x]`), AgyBar automatically discovers and synchronizes with that plan. Only when no plan exists does it prompt the agent to outline its steps.
 
 ---
 
 ## ✨ Features
 
-* **Plan-First Architecture**: Encourages the agent to declare its roadmap and step milestones before diving into execution.
-* **Zero Dependencies**: Pure Python 3 and Bash — no virtual environment, `pip install`, or external libraries required.
-* **Antigravity Native**: Designed as a standard Antigravity plugin (`plugin.json`, `hooks.json`, `rules/AGENTS.md`).
-* **Direct Terminal Telemetry**: Renders live updates directly to the controlling terminal (`/dev/tty`) with elapsed timers and clean ANSI styling.
+* **Universal AI CLI Support**: Compatible with Google Antigravity (`agy`), Anthropic's Claude Code (`claude`), Google Gemini CLI (`gemini`), and CLI workflows.
+* **Smart Plan Sniffing**: Automatically detects existing plans from `TODO.md`, `PLAN.md`, `/plan` skills, or conversation checklists without forcing duplicate planning.
+* **Direct Terminal Telemetry**: Renders live updates directly to `/dev/tty` with ANSI colors, progress blocks (`████░░░░`), percentage, elapsed time, and active step name.
 * **Adaptive Fallback**: If an agent starts working without an explicit plan, AgyBar's heuristic engine scales dynamically based on tool executions.
-* **Portable & Shareable**: Install once globally for all projects or per-project in `.agents/plugins/agybar/`.
+* **Zero Dependencies**: Pure Python 3 and Bash — no virtual environment or external dependencies required.
+* **Flexible Installation**: Install globally across all projects, or locally within a specific repository.
 * **Included CLI**: Inspect running sessions (`agybar status`), live-stream progress (`agybar watch`), or test animation styles (`agybar demo`).
 
 ---
 
 ## 🚀 Quick Start
 
-### 1. Global Installation (Recommended)
-Installs AgyBar so that **all Antigravity instances** across any repository automatically display the progress bar:
+### 1. Global Installation (All Supported AI CLIs)
+Installs AgyBar globally for all AI CLI instances on your machine:
 
 ```bash
 ./install.sh --global
-# Installs to ~/.gemini/config/plugins/agybar/
+```
+
+Or target a specific CLI:
+```bash
+./install.sh --global --cli agy     # Antigravity only
+./install.sh --global --cli claude  # Claude Code only
+./install.sh --global --cli gemini  # Gemini CLI only
 ```
 
 ### 2. Project-Local Installation
-To install AgyBar into a single repository:
+Installs AgyBar into your current repository workspace:
 
 ```bash
-./install.sh --project /path/to/your/project
-# Installs to /path/to/your/project/.agents/plugins/agybar/
+./install.sh --project /path/to/my-project
 ```
+
+---
+
+## 🧠 Smart Plan Detection: How It Works
+
+```
+                        ┌──────────────────────────────────────────────┐
+                        │              User Request                    │
+                        └──────────────────────┬───────────────────────┘
+                                               │
+                                               ▼
+                        ┌──────────────────────────────────────────────┐
+                        │         Universal Plan Sniffer               │
+                        │                                              │
+                        │  1. Check workspace plan files?              │
+                        │     (TODO.md, PLAN.md, tasks.md)             │
+                        │  2. Existing checklist in conversation?      │
+                        │     (- [ ] Task A, - [x] Task B)             │
+                        │  3. Planning skill active (/plan)?           │
+                        └──────────────┬───────────────────────────────┘
+                                       │
+                      ┌────────────────┴────────────────┐
+                      ▼                                 ▼
+            [Plan Detected!]                  [No Plan Found]
+     Adopts existing milestones          Rule prompts agent for a
+     and tracks completion %             brief 3-5 step outline
+                      │                                 │
+                      └────────────────┬────────────────┘
+                                       │
+                                       ▼
+                        ┌──────────────────────────────┐
+                        │   Real-Time Terminal Render  │
+                        │   ⚡ AgyBar [██████░░] 60%    │
+                        └──────────────────────────────┘
+```
+
+1. **Existing Plan Priority**: If a `TODO.md`, `PLAN.md`, or markdown checklist (`- [ ]`) is present, AgyBar parses the total tasks and marks progress as items are completed (`- [x]`).
+2. **Lifecycle Hooks Engine**: Tracks tool calls (`PreToolUse`, `PostToolUse`, `Stop`) across Antigravity and Claude Code.
+3. **Clean Output**: Uses controlling terminal writes (`/dev/tty`) so stdout/stderr output from agent tools is never corrupted.
 
 ---
 
@@ -54,50 +101,12 @@ agybar demo
 agybar demo --style ascii
 agybar demo --style dots
 
-# Check the current or latest Antigravity session status
+# Check the current or latest AI session status
 agybar status
 
-# Watch a live running Antigravity task in a separate terminal split
+# Watch a live running task in a separate terminal split
 agybar watch
 ```
-
----
-
-## 🧠 How It Works
-
-```
-┌─────────────────────────────────┐
-│        User Request             │
-└──────────────┬──────────────────┘
-               │
-               ▼
-┌─────────────────────────────────┐
-│     Planning Rule (AGENTS.md)   │
-│  Agent outputs:                 │
-│  <!-- agybar:plan {"total": 4} │
-└──────────────┬──────────────────┘
-               │
-               ▼
-┌─────────────────────────────────┐
-│      Antigravity Loop           │
-│  PreToolUse / PostToolUse Hooks │
-│  Updates state & calculates %   │
-└──────────────┬──────────────────┘
-               │
-               ▼
-┌─────────────────────────────────┐
-│     Terminal /dev/tty Render    │
-│  ⚡ AgyBar [██████░░] 60% (3/5)  │
-└─────────────────────────────────┘
-```
-
-1. **Rule Protocol (`rules/AGENTS.md`)**: Injected into the model's instructions, requesting that multi-step tasks declare a step plan:
-   ```html
-   <!-- agybar:plan {"total": 4, "steps": ["Scan codebase", "Implement fix", "Run tests", "Commit"]} -->
-   ```
-2. **Lifecycle Hooks (`hooks.json`)**: Intercepts `PreToolUse`, `PostToolUse`, and `Stop` events.
-3. **State Engine (`scripts/state.py`)**: Stores atomic session metrics in `/tmp/agybar/<conversation_id>.json`.
-4. **Renderer (`scripts/renderer.py`)**: Draws clean progress indicators to the user's terminal without breaking tool stdout/stderr.
 
 ---
 
@@ -107,25 +116,26 @@ agybar watch
 .
 ├── bin/
 │   └── agybar                 # CLI executable
-├── hooks.json                 # Antigravity lifecycle hooks configuration
-├── install.sh                 # One-line universal installer
+├── gemini-extension.json      # Gemini CLI extension manifest
+├── hooks.json                 # Antigravity & Claude Code lifecycle hooks
+├── install.sh                 # Universal installer script
 ├── plugin.json                # Antigravity plugin manifest
+├── .claude-plugin/
+│   └── plugin.json            # Claude Code plugin manifest
 ├── rules/
-│   └── AGENTS.md              # Agent planning instructions
+│   ├── AGENTS.md              # Rule protocol for Antigravity
+│   ├── CLAUDE.md              # Rule protocol for Claude Code
+│   └── GEMINI.md              # Rule protocol for Gemini CLI
 ├── scripts/
 │   ├── cli.py                 # CLI commands (status, watch, demo, install)
-│   ├── hook_runner.py         # Hook event handler for Antigravity
+│   ├── hook_runner.py         # Hook dispatcher
 │   ├── renderer.py            # Terminal bar formatting & ANSI colors
-│   └── state.py               # Session state persistence & transcript parser
+│   └── state.py               # Universal Plan Sniffer & state engine
 ├── .gitignore
 └── README.md
 ```
 
 ---
-
-## 🤝 Contributing
-
-Contributions and feedback are welcome! Feel free to submit issues or pull requests to enhance formatting, add desktop notifications, or improve IDE integrations.
 
 ## 📄 License
 

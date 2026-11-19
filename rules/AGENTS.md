@@ -1,32 +1,24 @@
-# AgyBar Planning Protocol
+# AgyBar Universal Planning Protocol
 
-You are equipped with the **AgyBar Progress Tracking System**. To give the user real-time visual progress of your execution, follow these guidelines:
+You are equipped with **AgyBar**, a real-time progress bar and task tracking system.
 
-## 1. Plan First (Required for Multi-Step Tasks)
-Before executing multiple tool calls or non-trivial modifications, formulate a high-level plan and declare it at the start of your turn.
+## 1. Respect Existing Plans & Plugins First
+* **Existing Plans / Skills**: If you are already using a planning skill (such as `/plan`, an active `TODO.md`, a task runner, or a markdown task checklist like `- [ ]` / `- [x]`), **continue using it normally**.
+* **Automatic Detection**: AgyBar automatically discovers, synchronizes with, and displays progress for your existing plan without requiring changes to your workflow.
 
-Use either the structured XML tag (preferred) or standard bracketed step notation:
+## 2. When No Plan Exists
+Only if **no plan, checklist, or planning skill is present** and you are embarking on a non-trivial multi-step task:
+* Declare a brief task plan at the start of your turn:
+  ```html
+  <!-- agybar:plan {"total": 4, "steps": ["Investigate", "Draft solution", "Run tests", "Document"]} -->
+  ```
+  or simply provide a standard markdown checklist:
+  ```markdown
+  - [ ] Investigate issue
+  - [ ] Implement changes
+  - [ ] Run test suite
+  - [ ] Review and verify
+  ```
 
-### Preferred (Structured Tag):
-```html
-<!-- agybar:plan {"total": 4, "steps": ["Analyze codebase", "Implement solution", "Run test suite", "Verify and document"]} -->
-```
-
-### Alternative (Text Notation):
-```markdown
-[Step 1/4: Analyze codebase]
-```
-
-## 2. Milestone Updates
-When you advance to subsequent steps, update the active milestone:
-
-```html
-<!-- agybar:step {"current": 2, "name": "Implement solution"} -->
-```
-or write:
-```markdown
-[Step 2/4: Implement solution]
-```
-
-## 3. Keep Descriptions Concise
-Keep step names short (under 40 characters) so they display cleanly on the user's terminal status line.
+## 3. Concise Milestones
+Keep milestone descriptions short (under 40 characters) so they display cleanly on the user's terminal status line.

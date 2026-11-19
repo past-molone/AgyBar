@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # ==============================================================================
-# AgyBar Universal Installer
-# Real-time progress bar & planning tracker for Gemini Antigravity (agy)
+# AgyBar Universal Multi-CLI Installer
+# Real-time progress bar & planning tracker for Gemini Antigravity, Claude Code,
+# Gemini CLI, and generic AI agents.
 # ==============================================================================
 
 set -euo pipefail
@@ -16,6 +17,7 @@ RESET="\033[0m"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TARGET_MODE="global"
+TARGET_CLI="all"
 PROJECT_PATH=""
 
 print_banner() {
@@ -27,8 +29,8 @@ print_banner() {
   echo " ██║  ██║╚██████╔╝   ██║   ██████╔╝██║  ██║██║  ██║"
   echo " ╚═╝  ╚═╝ ╚═════╝    ╚═╝   ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝"
   echo -e "${RESET}"
-  echo -e " ${BOLD}Real-Time Progress Bar for Gemini Antigravity (agy)${RESET}"
-  echo " ------------------------------------------------------------"
+  echo -e " ${BOLD}Universal Real-Time Progress Bar for AI CLIs (agy, claude, gemini)${RESET}"
+  echo " -------------------------------------------------------------------------"
 }
 
 print_banner
@@ -44,17 +46,21 @@ while [[ $# -gt 0 ]]; do
       TARGET_MODE="project"
       PROJECT_PATH="${2:-}"
       if [[ -z "$PROJECT_PATH" ]]; then
-        echo -e "${YELLOW}Warning: No project path specified with -p. Using current directory: $(pwd)${RESET}"
         PROJECT_PATH="$(pwd)"
       fi
+      shift 2 || shift
+      ;;
+    --cli|-c)
+      TARGET_CLI="${2:-all}"
       shift 2 || shift
       ;;
     --help|-h)
       echo "Usage: ./install.sh [OPTIONS]"
       echo ""
       echo "Options:"
-      echo "  --global, -g           Install globally to ~/.gemini/config/plugins/agybar/ (Default)"
-      echo "  --project, -p <PATH>   Install locally to <PATH>/.agents/plugins/agybar/"
+      echo "  --global, -g           Install globally (Default)"
+      echo "  --project, -p <PATH>   Install locally to project repository"
+      echo "  --cli, -c <CLI>        Target AI CLI: agy, claude, gemini, or all (Default: all)"
       echo "  --help, -h             Show this help message"
       exit 0
       ;;
@@ -65,30 +71,64 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ "$TARGET_MODE" == "global" ]]; then
-  DEST_DIR="$HOME/.gemini/config/plugins/agybar"
-  echo -e "${CYAN}Target Mode:${RESET} Global (~/.gemini/config/plugins/agybar/)"
-else
-  PROJECT_PATH="$(cd "$PROJECT_PATH" && pwd)"
-  DEST_DIR="$PROJECT_PATH/.agents/plugins/agybar"
-  echo -e "${CYAN}Target Mode:${RESET} Project-Local ($DEST_DIR)"
+copy_plugin_payload() {
+  local dest="$1"
+  mkdir -p "$dest"
+  cp "$SCRIPT_DIR/plugin.json" "$dest/"
+  cp "$SCRIPT_DIR/hooks.json" "$dest/"
+  cp "$SCRIPT_DIR/gemini-extension.json" "$dest/" 2>/dev/null || true
+  
+  mkdir -p "$dest/rules"
+  cp -R "$SCRIPT_DIR/rules/"* "$dest/rules/"
+
+  mkdir -p "$dest/scripts"
+  cp -R "$SCRIPT_DIR/scripts/"* "$dest/scripts/"
+  chmod +x "$dest/scripts/"*.py
+}
+
+installed_targets=()
+
+# 1. Antigravity (agy)
+if [[ "$TARGET_CLI" == "all" || "$TARGET_CLI" == "agy" ]]; then
+  if [[ "$TARGET_MODE" == "global" ]]; then
+    DEST_DIR="$HOME/.gemini/config/plugins/agybar"
+  else
+    PROJECT_PATH="$(cd "$PROJECT_PATH" && pwd)"
+    DEST_DIR="$PROJECT_PATH/.agents/plugins/agybar"
+  fi
+  copy_plugin_payload "$DEST_DIR"
+  installed_targets+=("Gemini Antigravity ($DEST_DIR)")
 fi
 
-echo -e "${DIM}Copying plugin files...${RESET}"
-mkdir -p "$DEST_DIR"
+# 2. Claude Code (claude)
+if [[ "$TARGET_CLI" == "all" || "$TARGET_CLI" == "claude" ]]; then
+  if [[ "$TARGET_MODE" == "global" ]]; then
+    DEST_DIR="$HOME/.claude/plugins/agybar"
+  else
+    PROJECT_PATH="$(cd "$PROJECT_PATH" && pwd)"
+    DEST_DIR="$PROJECT_PATH/.claude-plugins/agybar"
+    # Also drop CLAUDE.md rule if not already present
+    if [[ ! -f "$PROJECT_PATH/CLAUDE.md" ]]; then
+      cp "$SCRIPT_DIR/rules/CLAUDE.md" "$PROJECT_PATH/CLAUDE.md"
+    fi
+  fi
+  copy_plugin_payload "$DEST_DIR"
+  installed_targets+=("Claude Code ($DEST_DIR)")
+fi
 
-# Copy core components
-cp "$SCRIPT_DIR/plugin.json" "$DEST_DIR/"
-cp "$SCRIPT_DIR/hooks.json" "$DEST_DIR/"
+# 3. Gemini CLI (gemini)
+if [[ "$TARGET_CLI" == "all" || "$TARGET_CLI" == "gemini" ]]; then
+  if [[ "$TARGET_MODE" == "global" ]]; then
+    DEST_DIR="$HOME/.gemini/extensions/agybar"
+  else
+    PROJECT_PATH="$(cd "$PROJECT_PATH" && pwd)"
+    DEST_DIR="$PROJECT_PATH/.gemini/extensions/agybar"
+  fi
+  copy_plugin_payload "$DEST_DIR"
+  installed_targets+=("Gemini CLI ($DEST_DIR)")
+fi
 
-mkdir -p "$DEST_DIR/rules"
-cp -R "$SCRIPT_DIR/rules/"* "$DEST_DIR/rules/"
-
-mkdir -p "$DEST_DIR/scripts"
-cp -R "$SCRIPT_DIR/scripts/"* "$DEST_DIR/scripts/"
-chmod +x "$DEST_DIR/scripts/"*.py
-
-# Optional: Link CLI binary to user PATH if ~/.local/bin exists
+# Link CLI binary to user PATH if ~/.local/bin exists
 if [[ -d "$HOME/.local/bin" ]]; then
   ln -sf "$SCRIPT_DIR/bin/agybar" "$HOME/.local/bin/agybar"
   echo -e "${DIM}Linked 'agybar' CLI to ~/.local/bin/agybar${RESET}"
@@ -97,10 +137,15 @@ fi
 echo ""
 echo -e "${GREEN}${BOLD}✔ AgyBar installation complete!${RESET}"
 echo ""
-echo "What happens next:"
-echo "1. Whenever you run an 'agy' session, AgyBar's lifecycle hooks will monitor tool execution."
-echo "2. The agent will formulate a plan first and advance through each milestone."
-echo "3. You'll see real-time progress bars rendered directly in your terminal!"
+echo "Installed targets:"
+for target in "${installed_targets[@]}"; do
+  echo -e "  • ${CYAN}$target${RESET}"
+done
+echo ""
+echo "Key highlights:"
+echo "1. If your agent or any existing skill/plugin already creates a plan (TODO.md, /plan, markdown checklists),"
+echo "   AgyBar automatically adopts and tracks that existing plan without forcing a new format!"
+echo "2. Tool operations and tasks are tracked with real-time terminal progress telemetry."
 echo ""
 echo -e "Try running a demo right now:  ${BOLD}./bin/agybar demo${RESET}"
 echo -e "Check active session status:   ${BOLD}./bin/agybar status${RESET}"

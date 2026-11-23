@@ -69,7 +69,7 @@ def load_config() -> Dict[str, Any]:
         "style": "smooth",
         "theme": "pink",
         "width": 20,
-        "badge_symbol": "⚡",
+        "badge_symbol": "✦",
         "badge_name": "Progress",
         "badge_style": "default",  # "default" | "pill" | "bracket" | "minimal"
         "show_badge": True,
@@ -103,8 +103,8 @@ class ProgressBarRenderer:
         self.style = style or conf.get("style", "smooth")
         self.theme = theme or conf.get("theme", "pink")
         self.width = width or conf.get("width", 20)
-        self.badge_symbol = badge_symbol or conf.get("badge_symbol", "⚡")
-        self.badge_name = badge_name or conf.get("badge_name", "AgyBar")
+        self.badge_symbol = badge_symbol or conf.get("badge_symbol", "✦")
+        self.badge_name = badge_name or conf.get("badge_name", "Progress")
         self.badge_style = badge_style or conf.get("badge_style", "default")
 
         self.show_badge = conf.get("show_badge", True)

@@ -22,14 +22,14 @@ YELLOW = "\033[33m"
 MAGENTA = "\033[35m"
 BLUE = "\033[34m"
 
-# 256-Color & Standard ANSI Palettes
+# 256-Color, Truecolor & Standard ANSI Palettes
 COLOR_PALETTES = {
     "pink": {
-        "primary": "\033[38;5;141m\033[1m",      # Neon electric purple for badge text
-        "secondary": "\033[38;5;177m\033[1m",    # Orchid purple accent
-        "pct": "\033[38;5;141m\033[1m",          # Neon electric purple for percentage
-        "bar_fill": "\033[38;5;205m",            # Hot neon pink for the smooth progress bar
-        "empty": "\033[38;5;237m",               # Subtle dark background block
+        "primary": "\033[38;2;216;180;254m\033[1m",    # Bright pastel lilac (#d8b4fe) for 'Progress'
+        "secondary": "\033[38;2;233;213;255m\033[1m",  # Soft lavender (#e9d5ff)
+        "pct": "\033[38;2;216;180;254m\033[1m",        # Bright pastel lilac (#d8b4fe) for percentage
+        "bar_fill": "\033[38;2;249;168;212m",          # Soft pastel baby pink (#f9a8d4) for progress bar
+        "empty": "\033[38;2;65;70;85m",                # Soft slate gray background block
     },
     "cyan": {
         "primary": "\033[38;5;51m\033[1m",
@@ -125,7 +125,7 @@ class ProgressBarRenderer:
         name_str = f"{purple_color}{self.badge_name}{RESET}"
 
         if status == "completed":
-            sym_str = f"\033[38;5;120m\033[1m✔{RESET}"
+            sym_str = f"\033[38;2;110;231;183m\033[1m✔{RESET}"
         else:
             sym_str = f"{purple_color}{self.badge_symbol}{RESET}"
 

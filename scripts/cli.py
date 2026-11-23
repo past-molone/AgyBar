@@ -157,6 +157,7 @@ def cmd_demo(args: argparse.Namespace) -> None:
         ("Subagent: final verification", "run_command", {"CommandLine": "git commit -m 'feat: progress bar'"}, 97.5),
     ]
 
+    state.data["status"] = "running"
     state.data["total_steps"] = len(steps)
     state.data["plan_steps"] = [s[0] for s in steps]
     state.data["plan_detected"] = True

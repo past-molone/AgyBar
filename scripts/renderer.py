@@ -121,25 +121,23 @@ class ProgressBarRenderer:
         if not self.show_badge:
             return ""
 
+        purple_color = self.colors["primary"]
+        name_str = f"{purple_color}{self.badge_name}{RESET}"
+
         if status == "completed":
-            symbol = "✔"
-            name = self.badge_name
-            color = "\033[38;5;120m\033[1m"  # Green
+            sym_str = f"\033[38;5;120m\033[1m✔{RESET}"
         else:
-            symbol = self.badge_symbol
-            name = self.badge_name
-            color = self.colors["primary"]
+            sym_str = f"{purple_color}{self.badge_symbol}{RESET}"
 
         if self.badge_style == "pill":
-            # Inverted colored pill: [ ⚡ AgyBar ]
-            return f"\033[48;5;198m\033[38;5;232m\033[1m {symbol} {name} {RESET}"
+            return f"\033[48;5;141m\033[38;5;232m\033[1m {self.badge_symbol} {self.badge_name} {RESET}"
         elif self.badge_style == "bracket":
-            return f"{color}[{symbol} {name}]{RESET}"
+            return f"{purple_color}[{self.badge_symbol} {self.badge_name}]{RESET}"
         elif self.badge_style == "minimal":
-            return f"{color}{symbol}{RESET}"
+            return sym_str
         else:
-            # Default: Bold symbol + name
-            return f"{color}{symbol} {name}{RESET}"
+            # Default: Symbol + Purple word
+            return f"{sym_str} {name_str}"
 
     def format_bar(self, current: int, total: int, ratio: Optional[float] = None) -> str:
         """Format the #bar-fill component with smooth fractional sub-blocks."""
@@ -231,7 +229,7 @@ class ProgressBarRenderer:
 
         # 3. #percentage
         if self.show_pct:
-            pct_color = "\033[38;5;120m\033[1m" if status == "completed" else self.colors["pct"]
+            pct_color = self.colors["pct"]  # Always purple
             parts.append(f"{pct_color}{pct:3d}%{RESET}")
 
         # 4. #step-counter

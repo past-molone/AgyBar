@@ -233,7 +233,10 @@ class ProgressBarRenderer:
         if len(action) > 65:
             action = action[:62] + "..."
 
-        return f"   {DIM}└─ {source}: {action}{RESET}"
+        branch = "\033[38;2;180;185;200m"
+        bold_white = "\033[97;1m"
+        white = "\033[97m"
+        return f"   {branch}└─ {bold_white}{source}:{RESET} {white}{action}{RESET}"
 
     def format_line(self, state_data: Dict[str, Any]) -> str:
         current = state_data.get("current_step", 1)

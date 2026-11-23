@@ -733,7 +733,7 @@
           subagentBox.style.display = "block";
           subagentBox.innerHTML = `<div class="inspectable" id="el-subagent-line" onclick="selectElement('#subagent-line', 'Subagent Telemetry Line', 'Radar findings', 'Live findings reported by background subagent!')">
             <span class="element-tag">#subagent-line</span>
-            <span style="color: var(--text-muted); font-size: 12px; font-family: var(--font-mono);">&nbsp;&nbsp;&nbsp;└─ Radar: ${state.action}</span>
+            <span style="color: #ffffff; font-size: 12px; font-family: var(--font-mono); font-weight: 500;">&nbsp;&nbsp;&nbsp;<span style="color: #cbd5e1;">└─</span> <strong>Radar:</strong> ${state.action}</span>
           </div>`;
         } else {
           subagentBox.style.display = "none";

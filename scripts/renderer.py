@@ -6,6 +6,7 @@ Configured with high-precision 'smooth' fractional blocks and 'pink' neon theme.
 
 import json
 import os
+import shutil
 import sys
 import time
 from pathlib import Path
@@ -149,7 +150,13 @@ class ProgressBarRenderer:
         if not self.show_bar:
             return ""
 
-        w = self.width
+        term_cols = shutil.get_terminal_size((80, 24)).columns
+        if term_cols < 60:
+            w = max(8, min(self.width, 10))
+        elif term_cols < 75:
+            w = max(10, min(self.width, 14))
+        else:
+            w = self.width
         if ratio is None:
             if total <= 0:
                 total = 1
@@ -230,8 +237,10 @@ class ProgressBarRenderer:
             or "Analyzing workspace and inspecting progress"
         )
 
-        if len(action) > 65:
-            action = action[:62] + "..."
+        term_cols = shutil.get_terminal_size((80, 24)).columns
+        max_len = max(24, term_cols - 18)
+        if len(action) > max_len:
+            action = action[:max_len - 3] + "..."
 
         branch = "\033[38;2;180;185;200m"
         bold_white = "\033[97;1m"

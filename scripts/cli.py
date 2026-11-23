@@ -250,6 +250,18 @@ def cmd_preview(args: argparse.Namespace) -> None:
         pass
 
 
+def cmd_test(args: argparse.Namespace) -> None:
+    print(f"\n{CYAN}{BOLD}Running AgyBar Integration & Unit Tests...{RESET}\n")
+    test_file = ROOT_DIR / "tests" / "test_engine.py"
+    import subprocess
+    res = subprocess.run([sys.executable, str(test_file)], check=False)
+    if res.returncode == 0:
+        print(f"\n{GREEN}{BOLD}✔ All AgyBar tests passed!{RESET}\n")
+    else:
+        print(f"\n{YELLOW}{BOLD}✖ Tests failed (exit code {res.returncode}){RESET}\n")
+        sys.exit(res.returncode)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="AgyBar - Progress Bar for Gemini Antigravity & Claude Code")
     subparsers = parser.add_subparsers(dest="command", help="Available subcommands")
@@ -291,9 +303,14 @@ def main() -> None:
     p_uninstall.add_argument("--project", "-p", help="Target project root directory")
     p_uninstall.add_argument("--cli", "-c", choices=["all", "agy", "claude"], default="all", help="Target AI CLI")
 
+    # test
+    p_test = subparsers.add_parser("test", help="Run automated integration tests")
+
     args = parser.parse_args()
 
-    if args.command == "preview":
+    if args.command == "test":
+        cmd_test(args)
+    elif args.command == "preview":
         cmd_preview(args)
     elif args.command == "config":
         cmd_config(args)

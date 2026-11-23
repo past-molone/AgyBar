@@ -16,5 +16,16 @@ Only if **no plan, checklist, or planning skill is present** and you are embarki
   - [ ] Review and verify
   ```
 
-## 3. Concise Milestones
+## 3. Subagent Progress Inspection (Granular Precision)
+For multi-file or long-running tasks, run:
+```bash
+python3 scripts/inspect_progress.py --step <current> --total <total>
+```
+or output fine-grained telemetry tags:
+```html
+<!-- agybar:progress {"percent": 63.5, "action": "2/3 files patched, verifying tests"} -->
+```
+This enables exact, continuous percentages (e.g. `51.6%` -> `63.5%`) rather than jumping in broad block increments.
+
+## 4. Concise Milestones
 Keep milestone descriptions short (under 40 characters) so they display cleanly on the user's terminal status line.

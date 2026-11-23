@@ -144,17 +144,17 @@ def cmd_config(args: argparse.Namespace) -> None:
 
 
 def cmd_demo(args: argparse.Namespace) -> None:
-    print(f"\n{MAGENTA}{BOLD}Running AgyBar Demonstration...{RESET}\n")
+    print(f"\n{MAGENTA}{BOLD}Running AgyBar Demonstration (Smooth Pink + Violet Progress)...{RESET}\n")
     demo_session_id = "demo-session"
     state = SessionState(demo_session_id)
     renderer = ProgressBarRenderer(style=args.style, theme=args.theme)
 
     steps = [
-        ("Planning task & reading repo structure", "read_file", {"Path": "src/main.py"}),
-        ("Drafting feature implementation", "edit_file", {"Path": "src/main.py"}),
-        ("Running unit test suite", "run_command", {"CommandLine": "pytest tests/ -v"}),
-        ("Refining documentation and README", "write_file", {"Path": "README.md"}),
-        ("Committing changes and finishing", "run_command", {"CommandLine": "git commit -m 'feat: progress bar'"}),
+        ("Subagent: initial repo scan", "read_file", {"Path": "src/main.py"}, 18.5),
+        ("Subagent: patched 2/4 functions", "edit_file", {"Path": "src/main.py"}, 42.0),
+        ("Subagent: unit tests 12/12 passing", "run_command", {"CommandLine": "pytest tests/ -v"}, 67.5),
+        ("Subagent: docs & changelog drafted", "write_file", {"Path": "README.md"}, 86.0),
+        ("Subagent: final verification", "run_command", {"CommandLine": "git commit -m 'feat: progress bar'"}, 97.5),
     ]
 
     state.data["total_steps"] = len(steps)
@@ -163,14 +163,16 @@ def cmd_demo(args: argparse.Namespace) -> None:
     state.data["start_time"] = time.time()
     state.save()
 
-    for idx, (title, tool, tool_args) in enumerate(steps, 1):
+    for idx, (title, tool, tool_args, granular_pct) in enumerate(steps, 1):
         state.data["current_step"] = idx
+        state.data["granular_pct"] = granular_pct
         state.data["step_name"] = title
         state.record_tool_call(tool, tool_args, step_idx=idx)
         renderer.render(state.data, newline=False)
-        time.sleep(1.2)
+        time.sleep(1.1)
 
     state.mark_completed()
+    state.data["granular_pct"] = 100.0
     renderer.render(state.data, newline=True)
     print(f"\n{GREEN}{BOLD}Demonstration complete!{RESET}\n")
 

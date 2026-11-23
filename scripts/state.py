@@ -40,6 +40,16 @@ def get_state_file(conversation_id: str) -> Path:
     return ensure_state_dir() / f"{safe_id}.json"
 
 
+def get_latest_session_file() -> Optional[Path]:
+    if not STATE_DIR.exists():
+        return None
+    files = list(STATE_DIR.glob("*.json"))
+    if not files:
+        return None
+    files.sort(key=lambda p: p.stat().st_mtime, reverse=True)
+    return files[0]
+
+
 class SessionState:
     def __init__(self, conversation_id: str, workspace_path: Optional[str] = None):
         self.conversation_id = conversation_id
@@ -104,6 +114,18 @@ class SessionState:
             # Plan exists: update active tool action without overriding step name if already set
             if not self.data.get("step_name") or self.data.get("step_name") == "Initializing task":
                 self.data["step_name"] = action_desc
+
+        # Smooth micro-progress interpolation within the step
+        total = max(1, self.data.get("total_steps", 4))
+        curr = max(1, min(total, self.data.get("current_step", 1)))
+        step_span = 100.0 / total
+        step_base = (curr - 1) * step_span
+        tools_in_step = len(self.data["tool_history"]) % total + 1
+        micro_factor = min(0.85, tools_in_step * 0.22)
+        interpolated_pct = round(step_base + (micro_factor * step_span), 1)
+
+        if "granular_pct" not in self.data or self.data["granular_pct"] < interpolated_pct:
+            self.data["granular_pct"] = interpolated_pct
 
         self.save()
 
@@ -195,6 +217,18 @@ class SessionState:
                 name = latest_step.get("name", self.data["step_name"])
                 self.data["current_step"] = curr
                 self.data["step_name"] = name
+            except Exception:
+                pass
+
+        # 5. Check for fine-grained subagent progress tag: <!-- agybar:progress {"percent": 63.5, "action": "..."} -->
+        progress_match = re.findall(r"<!--\s*agybar:progress\s*(\{.*?\})\s*-->", content, re.DOTALL)
+        if progress_match:
+            try:
+                latest_prog = json.loads(progress_match[-1])
+                if "percent" in latest_prog:
+                    self.data["granular_pct"] = float(latest_prog["percent"])
+                if "action" in latest_prog:
+                    self.data["step_name"] = str(latest_prog["action"])
             except Exception:
                 pass
 

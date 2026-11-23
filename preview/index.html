@@ -560,8 +560,8 @@
         <div class="control-group">
           <label>Bar Graphic Style</label>
           <select id="styleSelect" onchange="changeStyle(this.value)">
+            <option value="smooth" selected>Smooth Fractional Blocks (█▋░░)</option>
             <option value="blocks">Unicode Solid Blocks (████░░░░)</option>
-            <option value="smooth">Smooth Fractional Blocks (█▋░░)</option>
             <option value="dots">Bullet Dots (●●●○○○)</option>
             <option value="ascii">ASCII Chars ([====>----])</option>
             <option value="pipeline">Multi-Stage Pipeline / Stepper</option>
@@ -573,11 +573,11 @@
         <div class="control-group">
           <label>Color Accent</label>
           <select id="colorSelect" onchange="changeColor(this.value)">
-            <option value="cyan">Cyber Cyan (Default)</option>
+            <option value="pink" selected>Neon Pink & Purple Accent</option>
+            <option value="cyan">Cyber Cyan</option>
             <option value="purple">DeepMind Violet</option>
             <option value="green">Emerald Terminal</option>
             <option value="amber">Amber Glow</option>
-            <option value="pink">Neon Pink</option>
           </select>
         </div>
 
@@ -624,14 +624,16 @@
   <script>
     // State object
     let state = {
-      pct: 60,
+      pct: 63,
       current: 3,
       total: 5,
-      action: "Running unit test suite",
+      action: "Subagent verified 2/3 endpoints patched",
       time: "00:14",
       width: 20,
-      style: "blocks",
-      color: "cyan",
+      style: "smooth",
+      color: "pink",
+      badgeName: "Progress",
+      badgeSymbol: "⚡",
       inspectMode: true,
       selectedId: null,
       showBadge: true,
@@ -644,26 +646,28 @@
     };
 
     const colorMap = {
-      cyan: { main: "var(--cyan)", hex: "#38bdf8", tag: "CYAN" },
-      purple: { main: "var(--purple)", hex: "#c084fc", tag: "PURPLE" },
-      green: { main: "var(--green)", hex: "#34d399", tag: "GREEN" },
-      amber: { main: "var(--amber)", hex: "#fbbf24", tag: "AMBER" },
-      pink: { main: "var(--pink)", hex: "#f472b6", tag: "PINK" },
+      pink: { bar: "var(--pink)", accent: "var(--purple)", hex: "#f472b6" },
+      cyan: { bar: "var(--cyan)", accent: "var(--cyan)", hex: "#38bdf8" },
+      purple: { bar: "var(--purple)", accent: "var(--pink)", hex: "#c084fc" },
+      green: { bar: "var(--green)", accent: "var(--green)", hex: "#34d399" },
+      amber: { bar: "var(--amber)", accent: "var(--amber)", hex: "#fbbf24" },
     };
 
     function renderBar() {
       const line = document.getElementById("liveBarLine");
       line.innerHTML = "";
 
-      const activeColor = colorMap[state.color].main;
+      const theme = colorMap[state.color] || colorMap.pink;
+      const barColor = theme.bar;
+      const accentColor = theme.accent;
 
       // 1. Badge Component
       if (state.showBadge) {
         const badge = document.createElement("span");
         badge.className = "inspectable" + (state.selectedId === "#badge" ? " selected" : "");
         badge.id = "el-badge";
-        badge.onclick = (e) => { e.stopPropagation(); selectElement("#badge", "Prefix Badge", "⚡ AgyBar", "Want to change symbol (⚡, ◆, 🚀), rename it, or remove it?"); };
-        badge.innerHTML = `<span class="element-tag">#badge</span><span style="color: ${state.color === 'purple' ? 'var(--cyan)' : 'var(--purple)'}; font-weight: 700;">⚡ AgyBar</span>`;
+        badge.onclick = (e) => { e.stopPropagation(); selectElement("#badge", "Prefix Badge", `${state.badgeSymbol} ${state.badgeName}`, "Customized to purple word 'Progress' with neon pink bar!"); };
+        badge.innerHTML = `<span class="element-tag">#badge</span><span style="color: ${accentColor}; font-weight: 700;">${state.badgeSymbol} ${state.badgeName}</span>`;
         line.appendChild(badge);
       }
 
@@ -672,9 +676,9 @@
         const bar = document.createElement("span");
         bar.className = "inspectable" + (state.selectedId === "#bar-fill" ? " selected" : "");
         bar.id = "el-bar-fill";
-        bar.onclick = (e) => { e.stopPropagation(); selectElement("#bar-fill", "Progress Bar Graphic", getBarString(), "Want a different character (blocks, smooth gradient, dots, ascii) or adjust width?"); };
+        bar.onclick = (e) => { e.stopPropagation(); selectElement("#bar-fill", "Progress Bar Graphic", getBarString(), "Smooth fractional blocks with high-precision subagent progress!"); };
         
-        bar.innerHTML = `<span class="element-tag">#bar-fill</span>${renderBarGraphic(activeColor)}`;
+        bar.innerHTML = `<span class="element-tag">#bar-fill</span>${renderBarGraphic(barColor)}`;
         line.appendChild(bar);
       }
 
@@ -683,8 +687,8 @@
         const pctEl = document.createElement("span");
         pctEl.className = "inspectable" + (state.selectedId === "#percentage" ? " selected" : "");
         pctEl.id = "el-percentage";
-        pctEl.onclick = (e) => { e.stopPropagation(); selectElement("#percentage", "Percentage Display", `${state.pct}%`, "Move left/right, change color or format (e.g. 60.0%)?"); };
-        pctEl.innerHTML = `<span class="element-tag">#percentage</span><span style="color: ${activeColor}; font-weight: 700;">${state.pct}%</span>`;
+        pctEl.onclick = (e) => { e.stopPropagation(); selectElement("#percentage", "Percentage Display", `${state.pct}%`, "Subagent granular percentage rendered in electric purple!"); };
+        pctEl.innerHTML = `<span class="element-tag">#percentage</span><span style="color: ${accentColor}; font-weight: 700;">${state.pct}%</span>`;
         line.appendChild(pctEl);
       }
 

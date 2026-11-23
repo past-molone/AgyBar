@@ -25,11 +25,11 @@ BLUE = "\033[34m"
 # 256-Color & Standard ANSI Palettes
 COLOR_PALETTES = {
     "pink": {
-        "primary": "\033[38;5;205m\033[1m",      # Neon hot pink
-        "secondary": "\033[38;5;198m\033[1m",    # Electric magenta
-        "pct": "\033[38;5;212m\033[1m",          # Bright pink
-        "bar_fill": "\033[38;5;205m",
-        "empty": "\033[38;5;237m",               # Subtle dark block
+        "primary": "\033[38;5;141m\033[1m",      # Neon electric purple for badge text
+        "secondary": "\033[38;5;177m\033[1m",    # Orchid purple accent
+        "pct": "\033[38;5;141m\033[1m",          # Neon electric purple for percentage
+        "bar_fill": "\033[38;5;205m",            # Hot neon pink for the smooth progress bar
+        "empty": "\033[38;5;237m",               # Subtle dark background block
     },
     "cyan": {
         "primary": "\033[38;5;51m\033[1m",
@@ -70,7 +70,7 @@ def load_config() -> Dict[str, Any]:
         "theme": "pink",
         "width": 20,
         "badge_symbol": "⚡",
-        "badge_name": "AgyBar",
+        "badge_name": "Progress",
         "badge_style": "default",  # "default" | "pill" | "bracket" | "minimal"
         "show_badge": True,
         "show_bar": True,
@@ -141,16 +141,19 @@ class ProgressBarRenderer:
             # Default: Bold symbol + name
             return f"{color}{symbol} {name}{RESET}"
 
-    def format_bar(self, current: int, total: int) -> str:
+    def format_bar(self, current: int, total: int, ratio: Optional[float] = None) -> str:
         """Format the #bar-fill component with smooth fractional sub-blocks."""
         if not self.show_bar:
             return ""
 
         w = self.width
-        if total <= 0:
-            total = 1
-        current = max(0, min(current, total))
-        ratio = current / total
+        if ratio is None:
+            if total <= 0:
+                total = 1
+            current = max(0, min(current, total))
+            ratio = current / total
+        else:
+            ratio = max(0.0, min(1.0, float(ratio)))
 
         fill_color = self.colors["bar_fill"]
         empty_color = self.colors["empty"]
@@ -193,7 +196,15 @@ class ProgressBarRenderer:
         if total <= 0:
             total = 1
         current = max(0, min(current, total))
-        pct = int(round((current / total) * 100))
+
+        # Check for fine-grained percentage (e.g. from subagent inspection or micro-stepping)
+        granular_pct = state_data.get("granular_pct")
+        if granular_pct is not None:
+            pct = int(round(granular_pct))
+            ratio = max(0.0, min(1.0, float(granular_pct) / 100.0))
+        else:
+            pct = int(round((current / total) * 100))
+            ratio = current / total
 
         start_time = state_data.get("start_time", time.time())
         elapsed_sec = int(time.time() - start_time)
@@ -214,7 +225,7 @@ class ProgressBarRenderer:
             parts.append(badge)
 
         # 2. #bar-fill
-        bar = self.format_bar(current, total)
+        bar = self.format_bar(current, total, ratio=ratio)
         if bar:
             parts.append(bar)
 

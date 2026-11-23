@@ -72,12 +72,14 @@ def load_config() -> Dict[str, Any]:
         "badge_symbol": "✦",
         "badge_name": "Progress",
         "badge_style": "default",  # "default" | "pill" | "bracket" | "minimal"
+        "dual_line": True,
+        "show_eta": True,
         "show_badge": True,
         "show_bar": True,
         "show_pct": True,
         "show_steps": True,
         "show_action": True,
-        "show_timer": True,
+        "show_timer": False,  # Replaced by ETA as AI CLI already has intrinsic elapsed timer
     }
     if CONFIG_PATH.exists():
         try:
@@ -106,15 +108,18 @@ class ProgressBarRenderer:
         self.badge_symbol = badge_symbol or conf.get("badge_symbol", "✦")
         self.badge_name = badge_name or conf.get("badge_name", "Progress")
         self.badge_style = badge_style or conf.get("badge_style", "default")
+        self.dual_line = conf.get("dual_line", True)
+        self.show_eta = conf.get("show_eta", True)
 
         self.show_badge = conf.get("show_badge", True)
         self.show_bar = conf.get("show_bar", True)
         self.show_pct = conf.get("show_pct", True)
         self.show_steps = conf.get("show_steps", True)
         self.show_action = conf.get("show_action", True)
-        self.show_timer = conf.get("show_timer", True)
+        self.show_timer = conf.get("show_timer", False)
 
         self.colors = COLOR_PALETTES.get(self.theme, COLOR_PALETTES["pink"])
+        self.last_rendered = False
 
     def format_badge(self, status: str = "running") -> str:
         """Format the #badge component."""
@@ -188,6 +193,48 @@ class ProgressBarRenderer:
             empty = "░" * (w - fill_len)
             return f"{fill_color}{fill}{empty_color}{empty}{RESET}"
 
+    def format_eta(self, state_data: Dict[str, Any], pct: float, status: str) -> str:
+        """Calculates and formats live ETA instead of redundant elapsed timer."""
+        if not self.show_eta:
+            return ""
+
+        if status == "completed":
+            return f"{DIM}[Completed]{RESET}"
+
+        start_time = state_data.get("start_time", time.time())
+        elapsed_sec = max(0.1, time.time() - start_time)
+
+        if pct >= 99.0:
+            return f"{DIM}[Finalizing...]{RESET}"
+        elif pct < 5.0 or elapsed_sec < 1.5:
+            return f"{DIM}[Estimating ETA...]{RESET}"
+
+        velocity = pct / elapsed_sec  # % per second
+        rem_pct = max(0.0, 100.0 - pct)
+        rem_sec = int(rem_pct / max(0.08, velocity))
+        r_mins, r_secs = divmod(rem_sec, 60)
+
+        if r_mins > 0:
+            return f"{DIM}[ETA {r_mins}m {r_secs:02d}s]{RESET}"
+        return f"{DIM}[ETA {r_secs:02d}s]{RESET}"
+
+    def format_subagent_line(self, state_data: Dict[str, Any]) -> str:
+        """Formats the secondary dual-line breadcrumb showing subagent findings."""
+        if not self.dual_line:
+            return ""
+
+        source = state_data.get("subagent_source", "Radar")
+        action = (
+            state_data.get("subagent_action")
+            or state_data.get("step_name")
+            or "Analyzing workspace and inspecting progress"
+        )
+
+        if len(action) > 65:
+            action = action[:62] + "..."
+
+        return f"   {DIM}└─ {source}: {action}{RESET}"
+
     def format_line(self, state_data: Dict[str, Any]) -> str:
         current = state_data.get("current_step", 1)
         total = state_data.get("total_steps", 4)
@@ -198,16 +245,11 @@ class ProgressBarRenderer:
         # Check for fine-grained percentage (e.g. from subagent inspection or micro-stepping)
         granular_pct = state_data.get("granular_pct")
         if granular_pct is not None:
-            pct = int(round(granular_pct))
-            ratio = max(0.0, min(1.0, float(granular_pct) / 100.0))
+            pct = float(granular_pct)
+            ratio = max(0.0, min(1.0, pct / 100.0))
         else:
-            pct = int(round((current / total) * 100))
+            pct = float(round((current / total) * 100))
             ratio = current / total
-
-        start_time = state_data.get("start_time", time.time())
-        elapsed_sec = int(time.time() - start_time)
-        mins, secs = divmod(elapsed_sec, 60)
-        time_str = f"{mins:02d}:{secs:02d}"
 
         step_name = state_data.get("step_name", "")
         if len(step_name) > 36:
@@ -229,39 +271,57 @@ class ProgressBarRenderer:
 
         # 3. #percentage
         if self.show_pct:
-            pct_color = self.colors["pct"]  # Always purple
-            parts.append(f"{pct_color}{pct:3d}%{RESET}")
+            pct_color = self.colors["pct"]  # Pastel lilac
+            parts.append(f"{pct_color}{int(round(pct)):3d}%{RESET}")
 
         # 4. #step-counter
         if self.show_steps:
             parts.append(f"{DIM}({current}/{total}){RESET}")
 
-        # 5. #action-title
-        if self.show_action:
+        # 5. #action-title (shown on line 1 only in single-line mode)
+        if self.show_action and not self.dual_line:
             parts.append(f"{BOLD}• {step_name}{RESET}")
 
-        # 6. #timer
-        if self.show_timer:
-            parts.append(f"{DIM}[{time_str}]{RESET}")
+        # 6. #eta
+        eta = self.format_eta(state_data, pct, status)
+        if eta:
+            parts.append(eta)
 
-        return " ".join(parts)
+        line1 = " ".join(parts)
+
+        if self.dual_line:
+            line2 = self.format_subagent_line(state_data)
+            return f"{line1}\n{line2}"
+
+        return line1
 
     def render(self, state_data: Dict[str, Any], newline: bool = False) -> None:
-        """Render directly to controlling terminal (/dev/tty) or fallback to sys.stderr."""
-        line = self.format_line(state_data)
+        """Render single or dual line to /dev/tty with in-place terminal updates."""
+        output_text = self.format_line(state_data)
 
-        # Prefer writing directly to the controlling terminal
+        def write_stream(stream):
+            if self.dual_line:
+                lines = output_text.split("\n")
+                l1 = lines[0] if len(lines) > 0 else ""
+                l2 = lines[1] if len(lines) > 1 else ""
+                # If we previously rendered dual lines, move cursor up 1 line and clear
+                prefix = "\033[1A\033[2K\r" if self.last_rendered else "\033[2K\r"
+                stream.write(f"{prefix}{l1}\n\033[2K\r{l2}" + ("\n" if newline else ""))
+                stream.flush()
+                self.last_rendered = not newline
+            else:
+                stream.write(CLEAR_LINE + output_text + ("\n" if newline else ""))
+                stream.flush()
+                self.last_rendered = not newline
+
         try:
             with open("/dev/tty", "w", encoding="utf-8") as tty:
-                tty.write(CLEAR_LINE + line + ("\n" if newline else ""))
-                tty.flush()
+                write_stream(tty)
                 return
         except Exception:
             pass
 
-        # Fallback to sys.stderr if /dev/tty is unavailable
         try:
-            sys.stderr.write(CLEAR_LINE + line + ("\n" if newline else ""))
-            sys.stderr.flush()
+            write_stream(sys.stderr)
         except Exception:
             pass

@@ -440,6 +440,8 @@
             <div class="agybar-line" id="liveBarLine">
               <!-- Elements will be dynamically rendered here -->
             </div>
+            <!-- Dual-Line Subagent Telemetry -->
+            <div id="subagentLineContainer" style="margin-top: 4px;"></div>
             <!-- Optional Sub-row for Pipeline Stepper -->
             <div id="pipelineContainer" style="display: none; margin-top: 8px;"></div>
           </div>
@@ -641,7 +643,9 @@
       showPct: true,
       showSteps: true,
       showAction: true,
-      showTimer: true,
+      showTimer: false,
+      showEta: true,
+      dualLine: true,
       showPipeline: false,
     };
 
@@ -712,14 +716,28 @@
         line.appendChild(actEl);
       }
 
-      // 6. Elapsed Timer Component
-      if (state.showTimer) {
-        const timerEl = document.createElement("span");
-        timerEl.className = "inspectable" + (state.selectedId === "#timer" ? " selected" : "");
-        timerEl.id = "el-timer";
-        timerEl.onclick = (e) => { e.stopPropagation(); selectElement("#timer", "Elapsed Timer", `[${state.time}]`, "Change format (e.g., 14s, 00:14, or estimated time remaining)?"); };
-        timerEl.innerHTML = `<span class="element-tag">#timer</span><span style="color: var(--text-muted); font-size: 12px;">[${state.time}]</span>`;
-        line.appendChild(timerEl);
+      // 6. ETA Timer Component (replacing redundant elapsed timer)
+      if (state.showEta) {
+        const etaEl = document.createElement("span");
+        etaEl.className = "inspectable" + (state.selectedId === "#eta" ? " selected" : "");
+        etaEl.id = "el-eta";
+        etaEl.onclick = (e) => { e.stopPropagation(); selectElement("#eta", "Live ETA Indicator", "[ETA 00:08]", "Rolling velocity estimated time of completion!"); };
+        etaEl.innerHTML = `<span class="element-tag">#eta</span><span style="color: var(--text-muted); font-size: 12px;">[ETA 00:08]</span>`;
+        line.appendChild(etaEl);
+      }
+
+      // 7. Dual-Line Subagent Breadcrumb
+      const subagentBox = document.getElementById("subagentLineContainer");
+      if (subagentBox) {
+        if (state.dualLine) {
+          subagentBox.style.display = "block";
+          subagentBox.innerHTML = `<div class="inspectable" id="el-subagent-line" onclick="selectElement('#subagent-line', 'Subagent Telemetry Line', 'Radar findings', 'Live findings reported by background subagent!')">
+            <span class="element-tag">#subagent-line</span>
+            <span style="color: var(--text-muted); font-size: 12px; font-family: var(--font-mono);">&nbsp;&nbsp;&nbsp;└─ Radar: ${state.action}</span>
+          </div>`;
+        } else {
+          subagentBox.style.display = "none";
+        }
       }
 
       // Pipeline sub-row

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # AgyBar Universal Multi-CLI Installer
-# Real-time progress bar & planning tracker for Gemini Antigravity, Claude Code,
-# Gemini CLI, and generic AI agents.
+# Real-time progress bar & planning tracker for Gemini Antigravity (agy)
+# and Claude Code (claude).
 # ==============================================================================
 
 set -euo pipefail
@@ -29,8 +29,8 @@ print_banner() {
   echo " ██║  ██║╚██████╔╝   ██║   ██████╔╝██║  ██║██║  ██║"
   echo " ╚═╝  ╚═╝ ╚═════╝    ╚═╝   ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝"
   echo -e "${RESET}"
-  echo -e " ${BOLD}Universal Real-Time Progress Bar for AI CLIs (agy, claude, gemini)${RESET}"
-  echo " -------------------------------------------------------------------------"
+  echo -e " ${BOLD}Real-Time Progress Bar for Gemini Antigravity & Claude Code${RESET}"
+  echo " ------------------------------------------------------------------"
 }
 
 print_banner
@@ -60,7 +60,7 @@ while [[ $# -gt 0 ]]; do
       echo "Options:"
       echo "  --global, -g           Install globally (Default)"
       echo "  --project, -p <PATH>   Install locally to project repository"
-      echo "  --cli, -c <CLI>        Target AI CLI: agy, claude, gemini, or all (Default: all)"
+      echo "  --cli, -c <CLI>        Target AI CLI: agy, claude, or all (Default: all)"
       echo "  --help, -h             Show this help message"
       exit 0
       ;;
@@ -76,7 +76,6 @@ copy_plugin_payload() {
   mkdir -p "$dest"
   cp "$SCRIPT_DIR/plugin.json" "$dest/"
   cp "$SCRIPT_DIR/hooks.json" "$dest/"
-  cp "$SCRIPT_DIR/gemini-extension.json" "$dest/" 2>/dev/null || true
   
   mkdir -p "$dest/rules"
   cp -R "$SCRIPT_DIR/rules/"* "$dest/rules/"
@@ -114,18 +113,6 @@ if [[ "$TARGET_CLI" == "all" || "$TARGET_CLI" == "claude" ]]; then
   fi
   copy_plugin_payload "$DEST_DIR"
   installed_targets+=("Claude Code ($DEST_DIR)")
-fi
-
-# 3. Gemini CLI (gemini)
-if [[ "$TARGET_CLI" == "all" || "$TARGET_CLI" == "gemini" ]]; then
-  if [[ "$TARGET_MODE" == "global" ]]; then
-    DEST_DIR="$HOME/.gemini/extensions/agybar"
-  else
-    PROJECT_PATH="$(cd "$PROJECT_PATH" && pwd)"
-    DEST_DIR="$PROJECT_PATH/.gemini/extensions/agybar"
-  fi
-  copy_plugin_payload "$DEST_DIR"
-  installed_targets+=("Gemini CLI ($DEST_DIR)")
 fi
 
 # Link CLI binary to user PATH if ~/.local/bin exists

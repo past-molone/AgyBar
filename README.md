@@ -1,7 +1,7 @@
 # ⚡ AgyBar
 
-> **Universal Real-Time Progress Bar & Plan Tracker for AI CLIs**  
-> *Supports Gemini Antigravity (`agy`), Claude Code, Gemini CLI, and generic AI agents.*
+> **Real-Time Progress Bar & Plan Tracker for Gemini Antigravity & Claude Code**  
+> *Supports Gemini Antigravity (`agy`) and Claude Code (`claude`).*
 
 ```text
 ⚡ AgyBar [████████████░░░░░░░░]  60% (3/5) • Running unit test suite [00:14]
@@ -15,7 +15,7 @@ Most importantly, **AgyBar does not force the AI to recreate a plan if an existi
 
 ## ✨ Features
 
-* **Universal AI CLI Support**: Compatible with Google Antigravity (`agy`), Anthropic's Claude Code (`claude`), Google Gemini CLI (`gemini`), and CLI workflows.
+* **Multi-CLI Support**: Tailored for Google Gemini Antigravity (`agy`) and Anthropic's Claude Code (`claude`).
 * **Smart Plan Sniffing**: Automatically detects existing plans from `TODO.md`, `PLAN.md`, `/plan` skills, or conversation checklists without forcing duplicate planning.
 * **Direct Terminal Telemetry**: Renders live updates directly to `/dev/tty` with ANSI colors, progress blocks (`████░░░░`), percentage, elapsed time, and active step name.
 * **Adaptive Fallback**: If an agent starts working without an explicit plan, AgyBar's heuristic engine scales dynamically based on tool executions.
@@ -27,7 +27,7 @@ Most importantly, **AgyBar does not force the AI to recreate a plan if an existi
 
 ## 🚀 Quick Start
 
-### 1. Global Installation (All Supported AI CLIs)
+### 1. Global Installation (Antigravity & Claude Code)
 Installs AgyBar globally for all AI CLI instances on your machine:
 
 ```bash
@@ -38,7 +38,6 @@ Or target a specific CLI:
 ```bash
 ./install.sh --global --cli agy     # Antigravity only
 ./install.sh --global --cli claude  # Claude Code only
-./install.sh --global --cli gemini  # Gemini CLI only
 ```
 
 ### 2. Project-Local Installation
@@ -116,7 +115,6 @@ agybar watch
 .
 ├── bin/
 │   └── agybar                 # CLI executable
-├── gemini-extension.json      # Gemini CLI extension manifest
 ├── hooks.json                 # Antigravity & Claude Code lifecycle hooks
 ├── install.sh                 # Universal installer script
 ├── plugin.json                # Antigravity plugin manifest
@@ -124,8 +122,7 @@ agybar watch
 │   └── plugin.json            # Claude Code plugin manifest
 ├── rules/
 │   ├── AGENTS.md              # Rule protocol for Antigravity
-│   ├── CLAUDE.md              # Rule protocol for Claude Code
-│   └── GEMINI.md              # Rule protocol for Gemini CLI
+│   └── CLAUDE.md              # Rule protocol for Claude Code
 ├── scripts/
 │   ├── cli.py                 # CLI commands (status, watch, demo, install)
 │   ├── hook_runner.py         # Hook dispatcher

@@ -136,18 +136,14 @@ def cmd_install(args: argparse.Namespace) -> None:
             targets.append(("Antigravity", Path.home() / ".gemini" / "config" / "plugins" / "agybar"))
         if target_cli in ("all", "claude"):
             targets.append(("Claude Code", Path.home() / ".claude" / "plugins" / "agybar"))
-        if target_cli in ("all", "gemini"):
-            targets.append(("Gemini CLI", Path.home() / ".gemini" / "extensions" / "agybar"))
     else:
         project_root = Path(args.project).resolve() if args.project else Path.cwd()
         if target_cli in ("all", "agy"):
             targets.append(("Antigravity", project_root / ".agents" / "plugins" / "agybar"))
         if target_cli in ("all", "claude"):
             targets.append(("Claude Code", project_root / ".claude-plugins" / "agybar"))
-        if target_cli in ("all", "gemini"):
-            targets.append(("Gemini CLI", project_root / ".gemini" / "extensions" / "agybar"))
 
-    items_to_copy = ["plugin.json", "hooks.json", "gemini-extension.json", "rules", "scripts"]
+    items_to_copy = ["plugin.json", "hooks.json", "rules", "scripts"]
 
     for name, target_dir in targets:
         print(f"{CYAN}Installing AgyBar for {name}:{RESET} {target_dir}")
@@ -205,13 +201,13 @@ def main() -> None:
     p_install = subparsers.add_parser("install", help="Install AgyBar plugin")
     p_install.add_argument("--global", dest="global_install", action="store_true", help="Install globally")
     p_install.add_argument("--project", "-p", help="Target project root directory")
-    p_install.add_argument("--cli", "-c", choices=["all", "agy", "claude", "gemini"], default="all", help="Target AI CLI")
+    p_install.add_argument("--cli", "-c", choices=["all", "agy", "claude"], default="all", help="Target AI CLI")
 
     # uninstall
     p_uninstall = subparsers.add_parser("uninstall", help="Uninstall AgyBar plugin")
     p_uninstall.add_argument("--global", dest="global_install", action="store_true", help="Uninstall globally")
     p_uninstall.add_argument("--project", "-p", help="Target project root directory")
-    p_uninstall.add_argument("--cli", "-c", choices=["all", "agy", "claude", "gemini"], default="all", help="Target AI CLI")
+    p_uninstall.add_argument("--cli", "-c", choices=["all", "agy", "claude"], default="all", help="Target AI CLI")
 
     args = parser.parse_args()
 

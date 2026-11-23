@@ -95,11 +95,59 @@ def cmd_watch(args: argparse.Namespace) -> None:
         print(f"\n{DIM}Watch stopped.{RESET}")
 
 
+def cmd_config(args: argparse.Namespace) -> None:
+    conf_path = Path.home() / ".agybar.json"
+    conf = {}
+    if conf_path.exists():
+        try:
+            with open(conf_path, "r", encoding="utf-8") as f:
+                conf = json.load(f)
+        except Exception:
+            pass
+
+    changed = False
+    if getattr(args, "style", None):
+        conf["style"] = args.style
+        changed = True
+    if getattr(args, "theme", None):
+        conf["theme"] = args.theme
+        changed = True
+    if getattr(args, "width", None):
+        conf["width"] = args.width
+        changed = True
+    if getattr(args, "badge_name", None):
+        conf["badge_name"] = args.badge_name
+        changed = True
+    if getattr(args, "badge_symbol", None):
+        conf["badge_symbol"] = args.badge_symbol
+        changed = True
+    if getattr(args, "badge_style", None):
+        conf["badge_style"] = args.badge_style
+        changed = True
+
+    if changed:
+        with open(conf_path, "w", encoding="utf-8") as f:
+            json.dump(conf, f, indent=2)
+        print(f"{GREEN}✔ Saved configuration to ~/.agybar.json{RESET}")
+
+    r = ProgressBarRenderer()
+    print(f"\n{BOLD}Active AgyBar Configuration:{RESET}")
+    print(f"  • Theme:        {r.theme}")
+    print(f"  • Style:        {r.style}")
+    print(f"  • Width:        {r.width} chars")
+    print(f"  • Badge Name:   {r.badge_name}")
+    print(f"  • Badge Symbol: {r.badge_symbol}")
+    print(f"  • Badge Style:  {r.badge_style}")
+    print(f"\n{BOLD}Live Preview:{RESET}")
+    mock_state = {"current_step": 3, "total_steps": 5, "step_name": "Running test suite", "status": "running"}
+    print(f"  {r.format_line(mock_state)}\n")
+
+
 def cmd_demo(args: argparse.Namespace) -> None:
     print(f"\n{MAGENTA}{BOLD}Running AgyBar Demonstration...{RESET}\n")
     demo_session_id = "demo-session"
     state = SessionState(demo_session_id)
-    renderer = ProgressBarRenderer(style=args.style)
+    renderer = ProgressBarRenderer(style=args.style, theme=args.theme)
 
     steps = [
         ("Planning task & reading repo structure", "read_file", {"Path": "src/main.py"}),
@@ -213,7 +261,17 @@ def main() -> None:
 
     # demo
     p_demo = subparsers.add_parser("demo", help="Run animated progress bar demo")
-    p_demo.add_argument("--style", choices=["blocks", "ascii", "dots"], default="blocks", help="Bar style")
+    p_demo.add_argument("--style", choices=["smooth", "blocks", "ascii", "dots"], default="smooth", help="Bar style")
+    p_demo.add_argument("--theme", choices=["pink", "cyan", "green", "purple", "amber"], default="pink", help="Color theme")
+
+    # config
+    p_config = subparsers.add_parser("config", help="View or modify active bar configuration")
+    p_config.add_argument("--style", choices=["smooth", "blocks", "ascii", "dots"], help="Bar graphic style")
+    p_config.add_argument("--theme", choices=["pink", "cyan", "green", "purple", "amber"], help="Color theme")
+    p_config.add_argument("--width", type=int, help="Bar width in characters")
+    p_config.add_argument("--badge-name", help="Badge text label (e.g. AgyBar, agy)")
+    p_config.add_argument("--badge-symbol", help="Badge icon symbol (e.g. ⚡, ◆, 🚀, ✦, 🌸)")
+    p_config.add_argument("--badge-style", choices=["default", "pill", "bracket", "minimal"], help="Badge visual style")
 
     # install
     p_install = subparsers.add_parser("install", help="Install AgyBar plugin")
@@ -231,6 +289,8 @@ def main() -> None:
 
     if args.command == "preview":
         cmd_preview(args)
+    elif args.command == "config":
+        cmd_config(args)
     elif args.command == "status":
         cmd_status(args)
     elif args.command == "watch":

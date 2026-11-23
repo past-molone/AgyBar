@@ -181,9 +181,27 @@ def cmd_uninstall(args: argparse.Namespace) -> None:
         print(f"{YELLOW}AgyBar was not found at {target_dir}{RESET}")
 
 
+def cmd_preview(args: argparse.Namespace) -> None:
+    html_file = ROOT_DIR / "preview" / "index.html"
+    print(f"\n{CYAN}{BOLD}AgyBar Interactive Designer & Terminal Visualizer{RESET}")
+    print(f"Open this file in your browser to interactively customize your progress bar:")
+    print(f"  {BOLD}file://{html_file}{RESET}\n")
+    try:
+        import subprocess
+        if sys.platform == "darwin":
+            subprocess.run(["open", str(html_file)], check=False)
+        elif sys.platform.startswith("linux"):
+            subprocess.run(["xdg-open", str(html_file)], check=False)
+    except Exception:
+        pass
+
+
 def main() -> None:
-    parser = argparse.ArgumentParser(description="AgyBar - Progress Bar for Gemini Antigravity")
+    parser = argparse.ArgumentParser(description="AgyBar - Progress Bar for Gemini Antigravity & Claude Code")
     subparsers = parser.add_subparsers(dest="command", help="Available subcommands")
+
+    # preview
+    p_preview = subparsers.add_parser("preview", help="Open the interactive design studio in your browser")
 
     # status
     p_status = subparsers.add_parser("status", help="Show current or latest session status")
@@ -211,7 +229,9 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    if args.command == "status":
+    if args.command == "preview":
+        cmd_preview(args)
+    elif args.command == "status":
         cmd_status(args)
     elif args.command == "watch":
         cmd_watch(args)

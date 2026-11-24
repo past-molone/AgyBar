@@ -236,6 +236,8 @@ class ProgressBarRenderer:
             or state_data.get("step_name")
             or "Analyzing workspace and inspecting progress"
         )
+        # Normalize whitespace and strip newlines so line 2 stays strictly on a single line
+        action = " ".join(str(action).split())
 
         term_cols = shutil.get_terminal_size((80, 24)).columns
         max_len = max(24, term_cols - 18)
@@ -307,16 +309,36 @@ class ProgressBarRenderer:
 
         return line1
 
-    def render(self, state_data: Dict[str, Any], newline: bool = False) -> None:
-        """Render single or dual line to /dev/tty with in-place terminal updates."""
+    def render(self, state_data: Dict[str, Any], newline: bool = False, anchor_bottom: bool = False) -> None:
+        """Render single or dual line with support for inline and anchored terminal modes."""
         output_text = self.format_line(state_data)
 
         def write_stream(stream):
+            if anchor_bottom:
+                try:
+                    rows, _ = shutil.get_terminal_size((80, 24))
+                    lines = output_text.split("\n")
+                    l1 = lines[0] if len(lines) > 0 else ""
+                    l2 = lines[1] if len(lines) > 1 else ""
+                    if self.dual_line and l2:
+                        cmd = (
+                            f"\0337\033[?25l"
+                            f"\033[{rows-1};1H\033[2K{l1}"
+                            f"\033[{rows};1H\033[2K{l2}"
+                            f"\033[?25h\0338"
+                        )
+                    else:
+                        cmd = f"\0337\033[?25l\033[{rows};1H\033[2K{l1}\033[?25h\0338"
+                    stream.write(cmd)
+                    stream.flush()
+                    return
+                except Exception:
+                    pass
+
             if self.dual_line:
                 lines = output_text.split("\n")
                 l1 = lines[0] if len(lines) > 0 else ""
                 l2 = lines[1] if len(lines) > 1 else ""
-                # If we previously rendered dual lines, move cursor up 1 line and clear
                 prefix = "\033[1A\033[2K\r" if self.last_rendered else "\033[2K\r"
                 stream.write(f"{prefix}{l1}\n\033[2K\r{l2}" + ("\n" if newline else ""))
                 stream.flush()

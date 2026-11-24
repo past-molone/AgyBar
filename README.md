@@ -1,13 +1,14 @@
-# ⚡ AgyBar
+# ✦ AgyBar
 
-> **Real-Time Progress Bar & Plan Tracker for Gemini Antigravity & Claude Code**  
+> **Real-Time Dual-Line Progress Bar & Plan Tracker for Gemini Antigravity & Claude Code**  
 > *Supports Gemini Antigravity (`agy`) and Claude Code (`claude`).*
 
 ```text
-⚡ AgyBar [████████████░░░░░░░░]  60% (3/5) • Running unit test suite [00:14]
+✦ Progress [████████████░░░░░░░░]  60% (3/5) [ETA 14s]
+   └─ Radar: 3 modified files detected (+45/-12)
 ```
 
-**AgyBar** brings real-time visual progress tracking and live terminal telemetry to agentic AI CLIs. 
+**AgyBar** brings real-time visual progress tracking and live terminal telemetry to agentic AI CLIs. Pinned directly **under the interactive typing prompt and below the shortcut help line**, remaining rock-solid and unchanging in position.
 
 Most importantly, **AgyBar does not force the AI to recreate a plan if an existing plan already exists**. If your agent or project is already using a planning skill (such as `/plan`, an active `TODO.md`, or markdown checklists `- [ ]` / `- [x]`), AgyBar automatically discovers and synchronizes with that plan. Only when no plan exists does it prompt the agent to outline its steps.
 
@@ -15,13 +16,14 @@ Most importantly, **AgyBar does not force the AI to recreate a plan if an existi
 
 ## ✨ Features
 
-* **Multi-CLI Support**: Tailored for Google Gemini Antigravity (`agy`) and Anthropic's Claude Code (`claude`).
+* **Native Statusline Integration**: Anchored directly underneath the typing prompt (`> ...`) and below `press ? for shortcut`, unchanging in position and never scrolling into history.
+* **Dual-Line Telemetry**: Line 1 displays the pastel progress bar and rolling ETA; Line 2 displays the crisp white Radar subagent inspection audit.
+* **Pastel Color Theme**: Pastel Lilac (`#d8b4fe`) badge and percentage, Soft Baby Pastel Pink (`#f9a8d4`) smooth fractional sub-block progress bar (`█▉▊▋▌▍▎▏`), and crisp bright white (`\033[97m`) Radar line.
 * **Smart Plan Sniffing**: Automatically detects existing plans from `TODO.md`, `PLAN.md`, `/plan` skills, or conversation checklists without forcing duplicate planning.
-* **Direct Terminal Telemetry**: Renders live updates directly to `/dev/tty` with ANSI colors, progress blocks (`████░░░░`), percentage, elapsed time, and active step name.
-* **Adaptive Fallback**: If an agent starts working without an explicit plan, AgyBar's heuristic engine scales dynamically based on tool executions.
+* **Pure Rolling ETA**: Eliminates redundant elapsed time counters in favor of live rolling velocity ETA (`[ETA 14s]`).
+* **Radar Subagent Metrics**: Inspects empirical git diffs and workspace progress to calculate continuous sub-percentage progress (e.g. `51.6%` -> `63.5%`).
 * **Zero Dependencies**: Pure Python 3 and Bash — no virtual environment or external dependencies required.
-* **Flexible Installation**: Install globally across all projects, or locally within a specific repository.
-* **Included CLI**: Inspect running sessions (`agybar status`), live-stream progress (`agybar watch`), or test animation styles (`agybar demo`).
+* **Included CLI**: Inspect running sessions (`agybar status`), output statusline text (`agybar statusline`), live-stream progress (`agybar watch`), or test animation styles (`agybar demo`).
 
 ---
 
@@ -124,10 +126,12 @@ agybar watch
 │   ├── AGENTS.md              # Rule protocol for Antigravity
 │   └── CLAUDE.md              # Rule protocol for Claude Code
 ├── scripts/
-│   ├── cli.py                 # CLI commands (status, watch, demo, install)
-│   ├── hook_runner.py         # Hook dispatcher
-│   ├── renderer.py            # Terminal bar formatting & ANSI colors
-│   └── state.py               # Universal Plan Sniffer & state engine
+│   ├── cli.py                 # CLI commands (status, watch, demo, statusline, install)
+│   ├── hook_runner.py         # Hook dispatcher (PreToolUse, PostToolUse, Stop)
+│   ├── inspect_progress.py    # Autonomous Radar git metrics & micro-stepper
+│   ├── renderer.py            # Terminal bar formatting & pastel ANSI colors
+│   ├── state.py               # Universal Plan Sniffer & session engine
+│   └── statusline.py          # Native statusline handler for CLI prompt integration
 ├── .gitignore
 └── README.md
 ```

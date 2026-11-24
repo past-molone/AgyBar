@@ -250,6 +250,14 @@ def cmd_preview(args: argparse.Namespace) -> None:
         pass
 
 
+def cmd_statusline(args: argparse.Namespace) -> None:
+    from statusline import generate_statusline
+    output = generate_statusline()
+    if output:
+        sys.stdout.write(output + "\n")
+        sys.stdout.flush()
+
+
 def cmd_test(args: argparse.Namespace) -> None:
     print(f"\n{CYAN}{BOLD}Running AgyBar Integration & Unit Tests...{RESET}\n")
     test_file = ROOT_DIR / "tests" / "test_engine.py"
@@ -291,6 +299,9 @@ def main() -> None:
     p_config.add_argument("--badge-symbol", help="Badge icon symbol (e.g. ⚡, ◆, 🚀, ✦, 🌸)")
     p_config.add_argument("--badge-style", choices=["default", "pill", "bracket", "minimal"], help="Badge visual style")
 
+    # statusline
+    p_statusline = subparsers.add_parser("statusline", help="Output statusline text for CLI prompt integration")
+
     # install
     p_install = subparsers.add_parser("install", help="Install AgyBar plugin")
     p_install.add_argument("--global", dest="global_install", action="store_true", help="Install globally")
@@ -310,6 +321,8 @@ def main() -> None:
 
     if args.command == "test":
         cmd_test(args)
+    elif args.command == "statusline":
+        cmd_statusline(args)
     elif args.command == "preview":
         cmd_preview(args)
     elif args.command == "config":

@@ -11,7 +11,7 @@ SCRIPTS_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPTS_DIR))
 
 from state import SessionState
-from renderer import ProgressBarRenderer
+from renderer import ProgressBarRenderer, load_config
 from inspect_progress import inspect_git_metrics, calculate_granular_percentage
 
 
@@ -31,6 +31,7 @@ def main() -> None:
     # Initialize state and renderer
     state = SessionState(conv_id, workspace_path=workspace_path)
     renderer = ProgressBarRenderer()
+    should_hook_render = load_config().get("hook_render", False)
 
     # Attempt to sync plan and current progress from transcript
     if transcript_path:
@@ -54,7 +55,8 @@ def main() -> None:
             step_idx = payload.get("stepIdx", 0)
 
             state.record_tool_call(tool_name, args, step_idx)
-            renderer.render(state.data, newline=False)
+            if should_hook_render:
+                renderer.render(state.data, newline=False, anchor_bottom=True)
             response = {"decision": "allow"}
 
         elif event_name == "PostToolUse":
@@ -93,7 +95,8 @@ def main() -> None:
             state.data["subagent_action"] = audit_msg
             state.save()
 
-            renderer.render(state.data, newline=False)
+            if should_hook_render:
+                renderer.render(state.data, newline=False, anchor_bottom=True)
             response = {}
 
         elif event_name == "Stop":
@@ -102,7 +105,8 @@ def main() -> None:
             state.data["subagent_source"] = "Radar"
             state.data["subagent_action"] = "All steps verified by subagent • Build clean"
             state.save()
-            renderer.render(state.data, newline=True)
+            if should_hook_render:
+                renderer.render(state.data, newline=True, anchor_bottom=True)
             response = {}
 
         else:

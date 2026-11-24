@@ -17,6 +17,7 @@ sys.path.insert(0, str(SCRIPTS_DIR))
 from renderer import ProgressBarRenderer
 from state import SessionState
 from inspect_progress import calculate_granular_percentage, inspect_git_metrics
+from statusline import generate_statusline
 
 
 class TestAgyBarRenderer(unittest.TestCase):
@@ -142,6 +143,42 @@ class TestAgyBarRadarEngine(unittest.TestCase):
         self.assertEqual(p_post.returncode, 0)
         res_post = json.loads(p_post.stdout.strip())
         self.assertEqual(res_post, {})
+
+
+class TestAgyBarStatusline(unittest.TestCase):
+    def test_statusline_generator_with_active_session(self):
+        """Statusline outputs valid dual-line progress when session is active."""
+        session = SessionState("test-statusline-active")
+        session.data["current_step"] = 2
+        session.data["total_steps"] = 4
+        session.data["granular_pct"] = 50.0
+        session.data["status"] = "running"
+        session.data["subagent_action"] = "Testing statusline component"
+        session.save()
+
+        payload = {
+            "session_id": "test-statusline-active",
+            "context_window": {"used_percentage": 42},
+            "model": {"display_name": "Sonnet 3.5"},
+        }
+        output = generate_statusline(payload)
+        self.assertIn("Progress", output)
+        self.assertIn("50%", output)
+        self.assertIn("Radar:", output)
+        self.assertIn("Testing statusline component", output)
+        self.assertIn("42% ctx", output)
+
+    def test_statusline_generator_idle_with_context(self):
+        """Statusline outputs clean idle badge when no session exists."""
+        payload = {
+            "session_id": "nonexistent-idle-session-xyz",
+            "context_window": {"used_percentage": 15},
+            "model": {"display_name": "Claude 3.5 Sonnet"},
+        }
+        output = generate_statusline(payload)
+        self.assertIn("Idle", output)
+        self.assertIn("Ready", output)
+        self.assertIn("15% ctx", output)
 
 
 def run_tests() -> bool:

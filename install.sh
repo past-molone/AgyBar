@@ -121,6 +121,81 @@ if [[ -d "$HOME/.local/bin" ]]; then
   echo -e "${DIM}Linked 'agybar' CLI to ~/.local/bin/agybar${RESET}"
 fi
 
+configure_statusline() {
+  local cli_target="$1"
+
+  # Claude Code statusLine in ~/.claude/settings.json
+  if [[ "$cli_target" == "all" || "$cli_target" == "claude" ]]; then
+    local claude_settings="$HOME/.claude/settings.json"
+    if [[ -f "$claude_settings" ]]; then
+      python3 -c "
+import json
+from pathlib import Path
+
+p = Path('$claude_settings')
+try:
+    with open(p, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+    prev = data.get('statusLine', {})
+    prev_cmd = prev.get('command', '') if isinstance(prev, dict) else ''
+    if prev_cmd and 'agybar' not in prev_cmd:
+        agy_conf_path = Path.home() / '.agybar.json'
+        conf = {}
+        if agy_conf_path.exists():
+            try:
+                with open(agy_conf_path) as cf:
+                    conf = json.load(cf)
+            except Exception:
+                pass
+        conf['chain_command'] = prev_cmd
+        with open(agy_conf_path, 'w', encoding='utf-8') as cf:
+            json.dump(conf, cf, indent=2)
+
+    data['statusLine'] = {
+        'type': 'command',
+        'command': 'agybar statusline',
+        'padding': 0,
+        'refreshInterval': 2
+    }
+    with open(p, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2)
+    print('  • Configured Claude Code native statusLine in ~/.claude/settings.json')
+except Exception as e:
+    print('  • Notice: Could not configure Claude Code statusLine:', e)
+"
+    fi
+  fi
+
+  # Antigravity CLI statusLine in ~/.gemini/antigravity-cli/settings.json
+  if [[ "$cli_target" == "all" || "$cli_target" == "agy" ]]; then
+    local agy_settings="$HOME/.gemini/antigravity-cli/settings.json"
+    python3 -c "
+import json
+from pathlib import Path
+
+p = Path('$agy_settings')
+try:
+    p.parent.mkdir(parents=True, exist_ok=True)
+    data = {}
+    if p.exists():
+        with open(p, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+    data['statusLine'] = {
+        'command': 'agybar statusline'
+    }
+    with open(p, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2)
+    print('  • Configured Gemini Antigravity native statusLine in ~/.gemini/antigravity-cli/settings.json')
+except Exception as e:
+    print('  • Notice: Could not configure Antigravity statusLine:', e)
+"
+  fi
+}
+
+echo ""
+echo -e "${BOLD}Configuring native terminal statusLine integration...${RESET}"
+configure_statusline "$TARGET_CLI"
+
 echo ""
 echo -e "${GREEN}${BOLD}✔ AgyBar installation complete!${RESET}"
 echo ""

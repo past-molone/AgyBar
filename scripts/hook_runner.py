@@ -90,6 +90,7 @@ def main() -> None:
             else:
                 audit_msg = state.data.get("step_name", f"Step {current_step}/{total_steps} in progress")
 
+            state.data["status"] = "running"
             state.data["granular_pct"] = computed_pct
             state.data["subagent_source"] = "Radar"
             state.data["subagent_action"] = audit_msg

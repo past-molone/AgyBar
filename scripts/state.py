@@ -92,6 +92,7 @@ class SessionState:
             pass
 
     def record_tool_call(self, tool_name: str, args: Dict[str, Any], step_idx: int) -> None:
+        self.data["status"] = "running"
         action_desc = self._summarize_tool(tool_name, args)
         self.data["tool_history"].append({
             "step_idx": step_idx,
@@ -131,6 +132,8 @@ class SessionState:
 
     def mark_completed(self) -> None:
         self.data["status"] = "completed"
+        self.data["completed_at"] = time.time()
+        self.data["granular_pct"] = 100.0
         self.data["current_step"] = self.data["total_steps"]
         self.data["step_name"] = "All steps completed"
         self.save()

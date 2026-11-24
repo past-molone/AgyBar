@@ -140,8 +140,9 @@ def generate_statusline(payload: Optional[Dict[str, Any]] = None) -> str:
         return renderer.format_line(state.data)
 
     elif status == "completed":
+        completed_at = state.data.get("completed_at") or state.data.get("last_update", 0)
         # Keep completed badge visible for 60 seconds after finish
-        if now - last_update <= 60:
+        if now - completed_at <= 60:
             return renderer.format_line(state.data)
         else:
             if chain_cmd:
